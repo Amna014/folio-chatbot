@@ -32,7 +32,7 @@ if "chat_history" not in st.session_state:
 
 #updated validator
 def validate_contact_info(text):
-    text = text.strip()
+    text = text.strip().lower()
 
     if text.endswith('@') or text.endswith('.'):
         return "invalid_email"
@@ -42,19 +42,30 @@ def validate_contact_info(text):
             return "invalid_email"
 
         banned_words = ['example', 'test', 'sample', 'demo', 'domain', 'fake']
-        username = text.split('@')[0].lower()
+        username = text.split('@')[0]
         if any(bad in username for bad in banned_words):
             return "invalid_email"
 
         return "valid_email"
 
-    if any(char.isdigit() for char in text): 
-        digits = re.sub(r"[^\d]", "", text)
-        if 10 <= len(digits) <= 15:
-            return "valid_phone"
+    #context aware phone validation
+    contextual_keywords = [
+        "pages", "page", "words", "copies", "price", "cost", "lines", "chapters",
+        "years", "months", "age", "deadline", "characters", "illustrations"
+    ]
+
+    if any(kw in text for kw in contextual_keywords):
+        return "invalid"  # Probably not contact info
+
+    # Extract digits and validate phone number
+    digits = re.sub(r"[^\d]", "", text)
+    if 10 <= len(digits) <= 15:
+        return "valid_phone"
+    elif digits:
         return "invalid_phone"
 
     return "invalid"
+
 
 real_person_phrases = [
     "real person", "connect me with a real person", "are you a real person",
@@ -307,6 +318,7 @@ Here is some relevant context from our knowledge base:
 {context}
 
 - If the context contains relevant info for the user’s question, incorporate it naturally into your response without copying it verbatim.
+
 
 
 Conversation so far:
